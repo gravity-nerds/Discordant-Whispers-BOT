@@ -1,7 +1,7 @@
 {
-  "name": "typebot",
+  "name": "discordant-whispers-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "A faction management bot for the discordant-whispers RPG system",
   "main": "index.js",
   "scripts": {
     "start": "ts-node ./dist/index.js",

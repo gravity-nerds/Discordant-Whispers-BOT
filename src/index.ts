@@ -1,9 +1,7 @@
 
 import { autocompletes } from "./autocomplete"
-import { Routes } from 'discord-api-types/v9'
-import { Client, Intents } from "discord.js"
+import { Client, IntentsBitField, REST, Routes } from "discord.js"
 import { Command } from "./util/Command"
-import { REST } from '@discordjs/rest'
 import * as dotenv from "dotenv"
 import * as fs from "fs"
 
@@ -20,7 +18,7 @@ const Rest = new REST({ version: '9' }).setToken(TOKEN);
 
 const client: Client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS
+      IntentsBitField.Flags.Guilds
     ]
 })
 

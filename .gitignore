@@ -1,3 +1,6 @@
 # Ignore distribution and node modules
 dist/
 node_modules/
+
+# Ignore .env because it has the token in
+.env

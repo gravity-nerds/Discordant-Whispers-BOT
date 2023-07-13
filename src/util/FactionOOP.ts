@@ -27,10 +27,13 @@ export class Faction {
     this.leader = creator;
     this.deputy = null;
 
-    this.createFactionRole();
+    this.ctor(name, colour, creator, guild);
+  }
+
+  async ctor(name: string, colour: ColorResolvable, creator: User, guild: Guild) {
+    await this.createFactionRole();
     //The faction role only exists after this point
 
-    this.Join(creator)
     const leaderRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.leaderRole
     if (leaderRole != undefined)
       this.attachedGuild.members.addRole({
@@ -38,6 +41,8 @@ export class Faction {
         role: leaderRole,
         reason: `${creator} is the leader of ${this.name}`
       })
+    this.Join(creator)
+
   }
 
   async createFactionRole() {
@@ -58,15 +63,17 @@ export class Faction {
   }
 
   Join(newUser: User) {
-    if (!this.blacklist.includes(newUser) && 
-      this.factionRole != undefined && 
-      !this.members.includes(newUser)) {
-        this.members.push(newUser);
-        this.attachedGuild.members.addRole({
-          user: newUser,
-          role: this.factionRole,
-          reason: `${newUser.username} has joined ${this.name}`
-      })
+    const notBlacklisted: boolean = !this.blacklist.includes(newUser);
+    const factionRoleDefined: boolean = this.factionRole != undefined;
+    const notInFaction: boolean = !this.members.includes(newUser);
+    // console.log(`Join method checks:\n  ${notBlacklisted}\n  ${factionRoleDefined}\n  ${notInFaction}`); //LOG
+    if (notBlacklisted && factionRoleDefined && notInFaction && this.factionRole != undefined) {
+      this.members.push(newUser);
+      this.attachedGuild.members.addRole({
+        user: newUser,
+        role: this.factionRole,
+        reason: `${newUser.username} has joined ${this.name}`
+      });
     }
   }
 

@@ -8,7 +8,7 @@ type leader_deputy_roles = {
 }
 
 export var gameGuilds = new Map<Guild, leader_deputy_roles>();
-export var Factions: Faction[];
+export var Factions: Faction[] = [];
 
 export async function setupGuild(g: Guild) {
   gameGuilds.set(g, {

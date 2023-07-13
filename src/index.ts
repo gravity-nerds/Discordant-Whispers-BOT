@@ -22,6 +22,10 @@ const client: Client = new Client({
     ]
 })
 
+//CLEAR ALL SLASH COMMANDS ON START
+Rest.put(Routes.applicationGuildCommands(config["client-id"], config["dev-server"]), {body: []})
+  .then(() => console.log("Commands RESET!")).catch(console.error);
+
 let cmds: { [key: string]: Command } = {}
 
 async function uploadCommands() {
@@ -60,9 +64,9 @@ client.on("ready", () => {
 
     client.on('interactionCreate', (interaction) => {
         client.guilds.fetch()
-        client.guilds.cache.forEach(guild => {
+        /*client.guilds.cache.forEach(guild => {
             console.log(guild.name)
-        })
+        })*/
         if (interaction.isCommand()) {
             if (interaction.commandName in cmds) {
                 const command = cmds[interaction.commandName]

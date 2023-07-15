@@ -1,4 +1,4 @@
-import { Guild, GuildMember, User, APIUser } from "discord.js";
+import { Guild, GuildMember, User, APIUser, ColorResolvable, Collection } from "discord.js";
 import { Faction } from "./FactionOOP";
 import { Role, APIInteractionGuildMember } from "discord.js"
 
@@ -7,8 +7,15 @@ export type leader_deputy_roles = {
   deputyRole: Role
 }
 
-export var gameGuilds = new Map<Guild, leader_deputy_roles>();
-export var Factions: Faction[] = [];
+export let gameGuilds = new Map<Guild, leader_deputy_roles>();
+export let Factions: Faction[] = [];
+
+// Pulling client caches to the global scope
+type client_caches= { 
+  guilds?: Collection<string, Guild>,
+  users?: Collection<string, User> 
+}
+export let clientCache: client_caches= {}; 
 
 export async function setupGuild(g: Guild) {
   gameGuilds.set(g, {
@@ -28,33 +35,42 @@ export async function setupGuild(g: Guild) {
 export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember, 
 guild: Guild): Faction | undefined => {
   let U: User | APIUser = usr.user;
-  console.log(`Finding faction of: ${U.username} in ${guild.name}`); //LOG
   let f: Faction | undefined;
   Factions.map((Fac: Faction) => {
-    console.log(`Faction: ${Fac.name}`); //LOG
-    Fac.members.map((u: User) => console.log(`    ${u.username}`)); //LOG
     if (U instanceof User && 
     Fac.members.includes(U) && 
-    guild.equals(Fac.attachedGuild)) {
-      console.log(`${U.username}'s faction is: ${Fac.name}`); //LOG
+    guild.equals(Fac.attachedGuild)) 
       f = Fac;
-    }
   });
   return f;
-  /*
-  for (let i: number = 0; i < Factions.length; i++) {
-    let roleName: string | undefined = Factions[i].factionRole?.name;
-    if (roleName == undefined) continue;
-    if (usr instanceof GuildMember) //This is weird and jank.
-      if (usr.roles.cache.has(roleName) && 
-      usr.guild == Factions[i].attachedGuild) {
-        f = Factions[i];
-        break;
-      }
-    else if (usr.roles.cache.has(roleName) && usr.guild == Factions[i].attachedGuild) {
-      f = Factions[i];
-      break;
-    }
-  }
-  */
+}
+
+export type bareFaction = {
+  attachedGuild: string,
+  name: string,
+  color: ColorResolvable,
+  members: string[],
+  leader: string,
+  deputy: string,
+  role?: string,
+  leaderActivity: number,
+  blacklist: string[]
+}
+
+export const fromJSON = (json: string): Faction | void => {
+  const fac: bareFaction = JSON.parse(json); // Get data from text
+
+  // Some pieces require extra processing
+  const guild: Guild | undefined = clientCache.guilds?.get(fac.attachedGuild);
+  if (guild == undefined) return;
+  const leader: User | undefined = clientCache.users?.get(fac.leader);
+  if (leader == undefined) return;
+
+  // Create the faction
+  return new Faction(
+    fac.name,
+    fac.color,
+    leader,
+    guild
+  );
 }

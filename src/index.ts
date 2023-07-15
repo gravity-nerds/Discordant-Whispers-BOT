@@ -4,6 +4,7 @@ import { Client, IntentsBitField, REST, Routes } from "discord.js"
 import { Command } from "./util/Command"
 import * as dotenv from "dotenv"
 import * as fs from "fs"
+import { clientCache } from "./util/factionUtil"
 
 
 
@@ -64,9 +65,11 @@ client.on("ready", () => {
 
     client.on('interactionCreate', (interaction) => {
         client.guilds.fetch()
-        /*client.guilds.cache.forEach(guild => {
-            console.log(guild.name)
-        })*/
+  
+        // Pull client caches out to global scope
+        clientCache.guilds = client.guilds.cache;
+        clientCache.users = client.users.cache;
+
         if (interaction.isCommand()) {
             if (interaction.commandName in cmds) {
                 const command = cmds[interaction.commandName]

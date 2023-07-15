@@ -17,6 +17,15 @@ export const cmd: Command = {
   execute: async (interaction: CommandInteraction) => {
     // Faction name and colour are required so these hopefully should never be undefined
     const faction_name: string | undefined = interaction.options.get("faction-name")?.value?.toString();
+    let nameUsed: boolean = false;
+    Factions.map((fac: Faction) => {
+      if (fac.name === faction_name && !nameUsed && fac.attachedGuild == interaction.guild) nameUsed = true;
+    });
+    if (nameUsed) {
+      interaction.reply(`The name "*${faction_name}*" is already taken.`);
+      return;
+    }
+
     const faction_colour_txt: `#${string}` | undefined = `#${interaction.options.get("faction-colour")?.value?.toString().replaceAll('#', '')}`;
     let faction_colour: ColorResolvable = [0, 0, 0];
     const validationRegex: RegExp = new RegExp("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");

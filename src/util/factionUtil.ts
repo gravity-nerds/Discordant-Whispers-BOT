@@ -1,8 +1,8 @@
-import { Guild, GuildMember } from "discord.js";
+import { Guild, GuildMember, User, APIUser } from "discord.js";
 import { Faction } from "./FactionOOP";
 import { Role, APIInteractionGuildMember } from "discord.js"
 
-type leader_deputy_roles = {
+export type leader_deputy_roles = {
   leaderRole: Role,
   deputyRole: Role
 }
@@ -25,8 +25,23 @@ export async function setupGuild(g: Guild) {
   });
 }
 
-export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember): Faction | undefined=> {
+export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember, 
+guild: Guild): Faction | undefined => {
+  let U: User | APIUser = usr.user;
+  console.log(`Finding faction of: ${U.username} in ${guild.name}`); //LOG
   let f: Faction | undefined;
+  Factions.map((Fac: Faction) => {
+    console.log(`Faction: ${Fac.name}`); //LOG
+    Fac.members.map((u: User) => console.log(`    ${u.username}`)); //LOG
+    if (U instanceof User && 
+    Fac.members.includes(U) && 
+    guild.equals(Fac.attachedGuild)) {
+      console.log(`${U.username}'s faction is: ${Fac.name}`); //LOG
+      f = Fac;
+    }
+  });
+  return f;
+  /*
   for (let i: number = 0; i < Factions.length; i++) {
     let roleName: string | undefined = Factions[i].factionRole?.name;
     if (roleName == undefined) continue;
@@ -41,5 +56,5 @@ export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember): Fa
       break;
     }
   }
-  return f;
+  */
 }

@@ -1,5 +1,5 @@
 import { User, Guild, ColorResolvable, Role } from "discord.js"
-import { Factions, gameGuilds } from "./factionUtil";
+import { Factions, gameGuilds, leader_deputy_roles } from "./factionUtil";
 
 
 export class Faction {
@@ -55,9 +55,23 @@ export class Faction {
   }
 
   Disband() {
+    console.log("Disband function for: " + this.name); //LOG
     if (this.factionRole != undefined)
       this.attachedGuild.roles.delete(this.factionRole, 
         `The faction "${this.name}" has been disbanded.`);
+    const role_pair: leader_deputy_roles | undefined = gameGuilds.get(this.attachedGuild);
+    if (role_pair!= undefined) {
+      this.attachedGuild.members.removeRole({
+        user: this.leader,
+        role: role_pair.leaderRole,
+        reason: `The faction "${this.name}" has been disbanded so can't have a leader.` 
+      });
+      if (this.deputy != null) this.attachedGuild.members.removeRole({
+        user: this.deputy,
+        role: role_pair.deputyRole,
+        reason: `The faction "${this.name}" has been disbanded so can't havea deputy.`
+      });
+    }
     const i = Factions.indexOf(this);
     if (i > -1) Factions.splice(i, 1);
   }

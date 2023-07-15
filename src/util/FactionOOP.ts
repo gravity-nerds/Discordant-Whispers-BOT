@@ -42,8 +42,6 @@ export class Faction {
         reason: `${creator} is the leader of ${this.name}`
       })
     this.Join(creator)
-
-    console.log(this.toJSON()); //LOG
   }
 
   async createFactionRole() {

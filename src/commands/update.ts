@@ -10,6 +10,7 @@ export const cmd: Command = {
         .setDescription(cmd.description)
     },
     execute: async (interaction) => {
+  
         interaction.reply("Pong")
     }
 }

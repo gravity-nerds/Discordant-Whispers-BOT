@@ -1,4 +1,4 @@
-import { User, Guild, ColorResolvable, Role } from "discord.js"
+import { User, Guild, ColorResolvable, Role, GuildMemberManager, Collection, GuildMember } from "discord.js"
 import { bareFaction, Factions, gameGuilds, leader_deputy_roles } from "./factionUtil";
 
 
@@ -13,9 +13,9 @@ export class Faction {
   leader: User;
   deputy: User | null = null;
   // This shouldn't be undefined but it's not 100% defined in the constructor
-  factionRole: Role | undefined;  
+  factionRole: Role | undefined;
   // The time (irl days) since the leader last messaged 
-  leaderActivity: number = 0; 
+  leaderActivity: number = 0;
   blacklist: User[] = [];
 
   constructor(name: string, colour: ColorResolvable, creator: User, guild: Guild) {
@@ -23,52 +23,57 @@ export class Faction {
     this.name = name;
     this.colour = colour;
     this.attachedGuild = guild;
-    
+
     this.leader = creator;
     this.deputy = null;
 
-    this.ctor(name, colour, creator, guild);
   }
 
-  async ctor(name: string, colour: ColorResolvable, creator: User, guild: Guild) {
-    await this.createFactionRole();
+  public async ctor(creator: User, existingRole: string | undefined = undefined) {
+    await this.createFactionRole(existingRole);
     //The faction role only exists after this point
 
     const leaderRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.leaderRole
-    if (leaderRole != undefined)
+    if (leaderRole != undefined &&
+      this.attachedGuild.members.cache.get(creator.id)?.roles.cache.has(leaderRole.id)) {
+      console.log(`About to add ${leaderRole.name} to ${creator.username}`); //LOG
       this.attachedGuild.members.addRole({
         user: creator,
         role: leaderRole,
         reason: `${creator} is the leader of ${this.name}`
-      })
+      });
+    }
     this.Join(creator)
   }
 
-  async createFactionRole() {
-    // If a role on the guild with the name of the faction exists
-    // then don't create a new role, just use the existing one.
-    // However this assumes that faction role names always match 
-    // faction names. So hopefully noone messes this up...
-    if (this.attachedGuild.roles.cache.has(this.name)) 
-      this.factionRole = this.attachedGuild.roles.cache.get(this.name);
-    else if (this.factionRole == undefined)
+  async createFactionRole(existingRole: string | undefined) {
+    console.log(`--- Creating role for ${this.name}...`); //LOG
+    console.log(`--- Role provided: ${existingRole}`); //LOG
+    const roleCache = await this.attachedGuild.roles.fetch();
+    if (existingRole == undefined) {
+      console.log(`--- No existing role provided...`); //LOG
       this.factionRole = await this.attachedGuild.roles.create({
         name: this.name,
         color: this.colour,
         reason: `The role to designate members of ${this.name}`
       });
+    }
+    else if (roleCache.has(existingRole)) {
+      console.log(`--- Existing Role ${existingRole} and is found in ${this.attachedGuild.name}!`); //LOG
+      this.factionRole = roleCache.get(existingRole);
+    }
   }
 
   Disband() {
     if (this.factionRole != undefined)
-      this.attachedGuild.roles.delete(this.factionRole, 
+      this.attachedGuild.roles.delete(this.factionRole,
         `The faction "${this.name}" has been disbanded.`);
     const role_pair: leader_deputy_roles | undefined = gameGuilds.get(this.attachedGuild);
-    if (role_pair!= undefined) {
+    if (role_pair != undefined) {
       this.attachedGuild.members.removeRole({
         user: this.leader,
         role: role_pair.leaderRole,
-        reason: `The faction "${this.name}" has been disbanded so can't have a leader.` 
+        reason: `The faction "${this.name}" has been disbanded so can't have a leader.`
       });
       if (this.deputy != null) this.attachedGuild.members.removeRole({
         user: this.deputy,
@@ -80,17 +85,20 @@ export class Faction {
     if (i > -1) Factions.splice(i, 1);
   }
 
-  Join(newUser: User) {
+  async Join(newUser: User) {
     const notBlacklisted: boolean = !this.blacklist.includes(newUser);
     const factionRoleDefined: boolean = this.factionRole != undefined;
     const notInFaction: boolean = !this.members.includes(newUser);
     if (notBlacklisted && factionRoleDefined && notInFaction && this.factionRole != undefined) {
       this.members.push(newUser);
-      this.attachedGuild.members.addRole({
-        user: newUser,
-        role: this.factionRole,
-        reason: `${newUser.username} has joined ${this.name}`
-      });
+      const members: Collection<string, GuildMember> = await this.attachedGuild.members.fetch();
+      const hasRole: boolean | undefined = members.get(newUser.id)?.roles.cache.has(this.factionRole.id);
+      if (!hasRole)
+        this.attachedGuild.members.addRole({
+          user: newUser,
+          role: this.factionRole,
+          reason: `${newUser.username} has joined ${this.name}`
+        });
     }
   }
 
@@ -110,13 +118,14 @@ export class Faction {
   AssignDeputy(user: User) {
     const deputyRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.deputyRole;
     if (deputyRole == undefined) return;
-    if (this.deputy != null) 
+    if (this.deputy != null)
       this.attachedGuild.members.removeRole({
         user: this.deputy,
         role: deputyRole,
         reason: `${this.deputy.username} is no longer the deputy of ${this.leader.username}`
       });
     this.deputy = user;
+    console.log(`About to add ${deputyRole.name} to ${user.username}`); //LOG
     this.attachedGuild.members.addRole({
       user: user,
       role: deputyRole,
@@ -124,15 +133,15 @@ export class Faction {
     });
   }
 
-  toJSON(): string {
+  toJSON(): bareFaction {
     // Build the list of usernames and blacklisted users
     let memberNames: string[] = [];
     this.members.map((usr: User) => memberNames.push(usr.username));
     let blackNames: string[] = [];
     this.blacklist.map((usr: User) => blackNames.push(usr.username));
     // Deal with the deputy being null
-    const deputyName = (this.deputy == null)? "" : this.deputy.username;
-    
+    const deputyName = (this.deputy == null) ? "" : this.deputy.username;
+
     // Build the simpler version of the faction
     const fac: bareFaction = {
       attachedGuild: this.attachedGuild.id,
@@ -141,10 +150,11 @@ export class Faction {
       members: memberNames,
       leader: this.leader.id,
       deputy: deputyName,
-      role: this.factionRole?.name,
+      role: this.factionRole?.id,
       leaderActivity: this.leaderActivity,
       blacklist: blackNames
     };
-    return JSON.stringify(fac);
+    // return JSON.stringify(fac);
+    return fac;
   }
 }

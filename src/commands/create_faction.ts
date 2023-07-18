@@ -10,7 +10,7 @@ export const cmd: Command = {
   command: () => new SlashCommandBuilder()
     .setName(cmd.name)
     .setDescription(cmd.description)
-    .addStringOption((option: SlashCommandStringOption) => 
+    .addStringOption((option: SlashCommandStringOption) =>
       option.setName("faction-name").setDescription("The name of the faction").setRequired(true))
     .addStringOption((option: SlashCommandStringOption) =>
       option.setName("faction-colour").setDescription("The colour the faction will use (good hex please)").setRequired(true)),
@@ -30,8 +30,11 @@ export const cmd: Command = {
     let faction_colour: ColorResolvable = [0, 0, 0];
     const validationRegex: RegExp = new RegExp("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
     if (faction_colour_txt != undefined && validationRegex.test(faction_colour_txt)) faction_colour = faction_colour_txt;
-    if (faction_name != undefined && faction_colour_txt != undefined && interaction.guild != null) // This might not be needed
-      Factions.push(new Faction(faction_name, faction_colour, interaction.user, interaction.guild));
+    if (faction_name != undefined && faction_colour_txt != undefined && interaction.guild != null) {
+      const fac: Faction = new Faction(faction_name, faction_colour, interaction.user, interaction.guild);
+      await fac.ctor(interaction.user);
+      Factions.push(fac);
+    } // This might not be needed
     interaction.reply(`Faction: "${faction_name}" successfully created!`);
   }
 }

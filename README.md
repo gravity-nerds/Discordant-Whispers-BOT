@@ -11,5 +11,4 @@ A discord bot that assists in faction management within:
   - Vote to exhile a character from a faction
   - Automatic and manual power transfer
   - Disbanding factions
-- Manage assassination and their defenses
 - and more maybe?

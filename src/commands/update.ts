@@ -1,5 +1,5 @@
-import { Command } from "src/util/Command"
-import { SlashCommandBuilder, Embed } from "@discordjs/builders"
+import { Command } from "../util/Command"
+import {  SlashCommandBuilder } from "discord.js"
 
 export const cmd: Command = {
     name: "ping",
@@ -10,8 +10,7 @@ export const cmd: Command = {
         .setDescription(cmd.description)
     },
     execute: async (interaction) => {
+  
         interaction.reply("Pong")
     }
 }
-
-        

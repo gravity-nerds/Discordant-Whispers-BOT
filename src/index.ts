@@ -93,4 +93,8 @@ client.on("ready", () => {
   })
 })
 
+if (!fs.existsSync('session')){fs.mkdirSync("session")}
+if (!fs.existsSync('session/guildroles.json')){fs.writeFileSync('session/guildroles.json', '{}')}
+if (!fs.existsSync('session/factions.json')){fs.writeFileSync('session/factions.json', '[]')}
+
 client.login(TOKEN)

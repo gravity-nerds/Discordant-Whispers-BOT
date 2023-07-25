@@ -5,14 +5,16 @@ import { Command } from "./util/Command"
 import * as dotenv from "dotenv"
 import * as fs from "fs"
 import { clientCache, loadData } from "./util/factionUtil"
-
-
-
+import {Schedules} from "./schedule";
 dotenv.config()
 
 const config: any = require("../config.json")
 const TOKEN: any = process.env.TOKEN
 
+if (!fs.existsSync('session')){fs.mkdirSync("session")}
+if (!fs.existsSync('session/guildroles.json')){fs.writeFileSync('session/guildroles.json', '{}')}
+if (!fs.existsSync('session/factions.json')){fs.writeFileSync('session/factions.json', '[]')}
+let schedules:Schedules = new Schedules();
 
 const Rest = new REST({ version: '9' }).setToken(TOKEN);
 
@@ -93,8 +95,6 @@ client.on("ready", () => {
   })
 })
 
-if (!fs.existsSync('session')){fs.mkdirSync("session")}
-if (!fs.existsSync('session/guildroles.json')){fs.writeFileSync('session/guildroles.json', '{}')}
-if (!fs.existsSync('session/factions.json')){fs.writeFileSync('session/factions.json', '[]')}
+
 
 client.login(TOKEN)

@@ -8,6 +8,8 @@ export type leader_deputy_roles = {
   deputyRole: Role
 }
 
+export const sealEmoji: { name: string, id: string } = { name: "approval", id: "1131280996302585947" }; // Wax seal not the animal :(
+
 export let gameGuilds = new Map<Guild, leader_deputy_roles>();
 export let Factions: Faction[] = [];
 
@@ -22,12 +24,12 @@ export async function setupGuild(g: Guild) {
   gameGuilds.set(g, {
     leaderRole: await g.roles.create({
       name: "Leader",
-      color: "Gold",
+      color: "Default",
       reason: `The faction leader role for ${g.name}`
     }),
     deputyRole: await g.roles.create({
       name: "Deputy",
-      color: "DarkGold",
+      color: "Default",
       reason: `The faction deputy role for ${g.name}`
     }),
   });
@@ -117,7 +119,6 @@ const guildRolesToJSON = (): string => {
       leaderRolerID: key.leaderRole.id,
       deputyRoleID: key.deputyRole.id
     }
-    console.log(JSON.stringify(rolepair));
     bare_guildRoles[val.id] = rolepair;
   });
   return JSON.stringify(bare_guildRoles);

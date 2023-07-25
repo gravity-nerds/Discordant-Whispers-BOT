@@ -1,4 +1,4 @@
-import { User, Guild, ColorResolvable, Role, GuildMemberManager, Collection, GuildMember } from "discord.js"
+import { User, Guild, ColorResolvable, Role, GuildMemberManager, Collection, GuildMember, ChannelType, PermissionsBitField, CategoryChannel } from "discord.js"
 import { bareFaction, Factions, gameGuilds, leader_deputy_roles } from "./factionUtil";
 
 
@@ -17,6 +17,7 @@ export class Faction {
   // The time (irl days) since the leader last messaged 
   leaderActivity: number = 0;
   blacklist: User[] = [];
+  category: CategoryChannel | undefined;
 
   constructor(name: string, colour: ColorResolvable, creator: User, guild: Guild) {
     // Copy some values from constructor args
@@ -33,9 +34,11 @@ export class Faction {
     await this.createFactionRole(existingRole);
     //The faction role only exists after this point
 
-    const leaderRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.leaderRole
-    if (leaderRole != undefined &&
-      this.attachedGuild.members.cache.get(creator.id)?.roles.cache.has(leaderRole.id)) {
+    const leaderRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.leaderRole;
+    const guildMembers: Collection<string, GuildMember> = await this.attachedGuild.members.fetch();
+    const creatorMember: GuildMember | undefined = guildMembers.get(creator.id);
+    if (leaderRole != undefined && creatorMember != undefined &&
+      !creatorMember.roles.cache.has(leaderRole.id)) {
       console.log(`About to add ${leaderRole.name} to ${creator.username}`); //LOG
       this.attachedGuild.members.addRole({
         user: creator,
@@ -44,30 +47,111 @@ export class Faction {
       });
     }
     this.Join(creator)
+
+    // If the required category doesn't exist in the server then create it
+    // PRAY that the category name is always the name of the faction
+    const channels = await this.attachedGuild.channels.fetch();
+    if (!channels.find(ch => ch!.name === this.name))
+      this.createChannels()
+  }
+
+  async createChannels() {
+    // Get the leader and deputy roles
+    const leaderRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.leaderRole;
+    const deputyRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.deputyRole;
+    if (leaderRole == undefined || deputyRole == undefined) return;
+
+    // Create the category to contain the channels
+    this.category = await this.attachedGuild.channels.create({
+      name: `${this.name}`,
+      reason: "Every faction has a category containing it's channels",
+      type: ChannelType.GuildCategory,
+      topic: `The private correspondences and plans of ${this.name}`,
+      permissionOverwrites: [
+        {
+          id: this.factionRole!.id,
+          allow: PermissionsBitField.Default
+        },
+        {
+          id: this.attachedGuild.roles.everyone,
+          deny: PermissionsBitField.All
+        },
+        {
+          id: leaderRole,
+          allow: [PermissionsBitField.Flags.ManageNicknames, PermissionsBitField.Flags.ManageThreads]
+        },
+        {
+          id: deputyRole,
+          allow: [PermissionsBitField.Flags.ManageNicknames, PermissionsBitField.Flags.ManageThreads]
+        }
+      ]
+    });
+
+    // Create all the other channels
+    this.attachedGuild.channels.create({
+      name: `${this.name}-ooc`,
+      reason: "Every faction has an out of character channel",
+      type: ChannelType.GuildText,
+      parent: this.category,
+      topic: "A place to discuss secret plans or just chill out"
+    });
+
+    this.attachedGuild.channels.create({
+      name: `${this.name}-in-character`,
+      reason: "Every faction has an in character channel",
+      type: ChannelType.GuildText,
+      parent: this.category,
+      topic: "A place to argue/debate, plan or hang out in character"
+    });
+
+    this.attachedGuild.channels.create({
+      name: `${this.name} VC`,
+      reason: "Every faction has a voice channel",
+      type: ChannelType.GuildVoice,
+      parent: this.category,
+      topic: "A voice call for in and out of character conversation",
+      permissionOverwrites: [
+        {
+          id: leaderRole,
+          allow: [
+            PermissionsBitField.Flags.PrioritySpeaker,
+            PermissionsBitField.Flags.MuteMembers,
+            PermissionsBitField.Flags.MoveMembers,
+            PermissionsBitField.Flags.DeafenMembers
+          ]
+        },
+        {
+          id: deputyRole,
+          allow: [
+            PermissionsBitField.Flags.PrioritySpeaker,
+            PermissionsBitField.Flags.MuteMembers,
+            PermissionsBitField.Flags.MoveMembers,
+            PermissionsBitField.Flags.DeafenMembers
+          ]
+        },
+        {
+          id: this.attachedGuild.roles.everyone,
+          deny: PermissionsBitField.Flags.ViewChannel
+        }
+      ]
+    });
   }
 
   async createFactionRole(existingRole: string | undefined) {
-    console.log(`--- Creating role for ${this.name}...`); //LOG
-    console.log(`--- Role provided: ${existingRole}`); //LOG
     const roleCache = await this.attachedGuild.roles.fetch();
-    if (existingRole == undefined) {
-      console.log(`--- No existing role provided...`); //LOG
+    if (existingRole == undefined)
       this.factionRole = await this.attachedGuild.roles.create({
         name: this.name,
         color: this.colour,
         reason: `The role to designate members of ${this.name}`
       });
-    }
-    else if (roleCache.has(existingRole)) {
-      console.log(`--- Existing Role ${existingRole} and is found in ${this.attachedGuild.name}!`); //LOG
+    else if (roleCache.has(existingRole))
       this.factionRole = roleCache.get(existingRole);
-    }
   }
 
   Disband() {
-    if (this.factionRole != undefined)
-      this.attachedGuild.roles.delete(this.factionRole,
-        `The faction "${this.name}" has been disbanded.`);
+    console.log(`Disbanding ${this.name}`); //LOG
+    // Remove leader and deputy roles from leader/deputy
     const role_pair: leader_deputy_roles | undefined = gameGuilds.get(this.attachedGuild);
     if (role_pair != undefined) {
       this.attachedGuild.members.removeRole({
@@ -78,9 +162,25 @@ export class Faction {
       if (this.deputy != null) this.attachedGuild.members.removeRole({
         user: this.deputy,
         role: role_pair.deputyRole,
-        reason: `The faction "${this.name}" has been disbanded so can't havea deputy.`
+        reason: `The faction "${this.name}" has been disbanded so can't have a deputy.`
       });
     }
+
+    // Remove the faction role for all members
+    // This conveniently locks faction channels as a side effect
+    this.members.forEach((member: User) => {
+      if (this.factionRole != undefined)
+        this.attachedGuild.members.removeRole({
+          user: member,
+          role: this.factionRole,
+          reason: `The faction ${this.name} has been disbanded and so has no members`
+        });
+    });
+
+    // However the category needs to be made readable to @everyone
+    this.category?.permissionOverwrites.edit(this.attachedGuild.roles.everyone, { ReadMessageHistory: true });
+
+    // Remove this faction from the list
     const i = Factions.indexOf(this);
     if (i > -1) Factions.splice(i, 1);
   }

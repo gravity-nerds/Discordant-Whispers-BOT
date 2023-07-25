@@ -9,14 +9,18 @@ export const cmd: Command = {
   command: () => new SlashCommandBuilder()
     .setName(cmd.name).setDescription(cmd.description),
   execute: async (interaction: CommandInteraction) => {
-    if (Factions.length <= 0) {
+    let factionLS: string = "**All factions:**\n";
+    let factionCount: number = 0;
+    Factions.forEach((fac: Faction) => {
+      if (interaction.guild != undefined &&
+        fac.attachedGuild.equals(interaction.guild)) {
+        factionLS += `    *${fac.name}*\n`
+        factionCount++;
+      }
+    });
+    if (factionCount == 0) {
       interaction.reply("**There are no factions.**");
       return;
-    }
-    let factionLS: string = "**All factions:**\n";
-    Factions.forEach(
-      (fac: Faction) => {factionLS += `    *${fac.name}*\n`}
-    );
-    interaction.reply(factionLS);
+    } else interaction.reply(factionLS);
   }
 }

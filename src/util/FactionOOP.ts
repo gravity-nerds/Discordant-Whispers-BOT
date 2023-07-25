@@ -235,21 +235,21 @@ export class Faction {
 
   toJSON(): bareFaction {
     // Build the list of usernames and blacklisted users
-    let memberNames: string[] = [];
-    this.members.map((usr: User) => memberNames.push(usr.username));
+    let memberIDs: string[] = [];
+    this.members.map((usr: User) => memberIDs.push(usr.id));
     let blackNames: string[] = [];
-    this.blacklist.map((usr: User) => blackNames.push(usr.username));
+    this.blacklist.map((usr: User) => blackNames.push(usr.id));
     // Deal with the deputy being null
-    const deputyName = (this.deputy == null) ? "" : this.deputy.username;
+    const deputyID: string = (this.deputy == null) ? "" : this.deputy.id;
 
     // Build the simpler version of the faction
     const fac: bareFaction = {
       attachedGuild: this.attachedGuild.id,
       name: this.name,
       color: this.colour,
-      members: memberNames,
+      members: memberIDs,
       leader: this.leader.id,
-      deputy: deputyName,
+      deputy: deputyID,
       role: this.factionRole?.id,
       leaderActivity: this.leaderActivity,
       blacklist: blackNames

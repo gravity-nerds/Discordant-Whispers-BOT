@@ -87,8 +87,8 @@ const fromJSON = async (json: string) => {
     await F.ctor(leader, fac.role);
 
     // Populate with existing members
-    fac.members.forEach((uname: string) => {
-      const member: GuildMember | undefined = guild.members.cache.get(uname);
+    fac.members.forEach((uuid: string) => {
+      const member: GuildMember | undefined = guild.members.cache.get(uuid);
       if (member != undefined) {
         F.Join(member.user);
       }

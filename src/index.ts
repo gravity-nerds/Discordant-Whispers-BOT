@@ -20,7 +20,9 @@ const Rest = new REST({ version: '9' }).setToken(TOKEN);
 const client: Client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.GuildMembers
+    IntentsBitField.Flags.GuildMembers,
+    IntentsBitField.Flags.GuildMessageReactions,
+    IntentsBitField.Flags.GuildMessages
   ]
 })
 

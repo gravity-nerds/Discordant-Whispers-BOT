@@ -9,7 +9,7 @@ export const cmd: Command = {
     .setName(cmd.name).setDescription(cmd.description),
   execute: async (interaction: CommandInteraction) => {
      
-    const whitelist: string[] = ['410455293265444873', '612325551079686273']; // balaro4242 and droshux
+    const whitelist: string[] = ['410455293265444873', '612325551079686273', '442057710482227222']; // balaro4242 and droshux and bumpkinpi
     if (!whitelist.includes(interaction.user.id)) {
       interaction.reply("**You don't have the permissions for that**");
       return;

@@ -1,7 +1,7 @@
-import { Command } from "../util/Command";
-import { SlashCommandBuilder, CommandInteraction, GuildMemberRoleManager, Guild, APIInteractionGuildMember, GuildMember, Role, User, Message, MessageReaction, Collection, ReactionCollector } from "discord.js";
-import { gameGuilds, getUserFaction, sealEmoji } from "../util/factionUtil";
-import { Faction } from "../util/FactionOOP";
+import { Command } from "@/src/util/Command";
+import { SlashCommandBuilder, CommandInteraction, GuildMemberRoleManager, Guild, APIInteractionGuildMember, GuildMember, Role, User, Message, MessageReaction, Collection, ReactionCollector, Emoji } from "discord.js";
+import { gameGuilds, getUserFaction } from "@/src/util/factionUtil";
+import { Faction } from "@/src/util/FactionOOP";
 
 // Command to disband a faction:
 export const cmd: Command = {
@@ -43,6 +43,8 @@ const disbandValidation = async (interaction: CommandInteraction): Promise<Facti
 }
 
 const disbandDeputyApproval = async (interaction: CommandInteraction, fac: Faction) => {
+  const sealEmoji: Emoji | undefined = gameGuilds.get(interaction.guild!)?.sealEmoji;
+  if (sealEmoji == undefined || sealEmoji.id == null) { interaction.editReply(`*The server ${interaction.guild?.name} has not ben initialised...*`); return; }
 
   const msg: Message = await interaction.reply({
     content: `**<@${fac.leader.id}> is attempting to disband ${fac.name}!**\n\t*<@${fac.deputy!.id}>: to confirm this please react with: <:${sealEmoji.name}:${sealEmoji.id}> within* **24hrs.**`,
@@ -52,11 +54,11 @@ const disbandDeputyApproval = async (interaction: CommandInteraction, fac: Facti
   const hours24: number = 86400000;
   const mins2: number = 120000; //TEMP for testing
   const collector: ReactionCollector = msg.createReactionCollector({ time: mins2 });
-  collector.on('collect', r => console.log(`\tN:${r.emoji.name}, X:${r.count},U:${r.users.cache.toJSON()}`)); //LOG
+
   collector.on('end', async (r: Collection<string, MessageReaction>) => {
     // Check if the sealEmoji has been added
-    if (!r.has(sealEmoji.id)) { interaction.editReply("*Deputy failed to approve...*"); return; }
-    const sealReaction: MessageReaction = r.get(sealEmoji.id)!; // And if so get a reference
+    if (!r.has(sealEmoji.id!)) { interaction.editReply("*Deputy failed to approve...*"); return; }
+    const sealReaction: MessageReaction = r.get(sealEmoji.id!)!; // And if so get a reference
 
     // Check if the deputy was one of the users.
     const users: Collection<string, User> = await sealReaction.users.fetch();

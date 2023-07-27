@@ -1,7 +1,7 @@
-import { Command } from "../util/Command";
+import { Command } from "@/src/util/Command";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { Faction } from "../util/FactionOOP";
-import { Factions } from "../util/factionUtil";
+import { Faction } from "@/src/util/FactionOOP";
+import { Factions } from "@/src/util/factionUtil";
 
 export const cmd: Command = {
   name: "list-factions",

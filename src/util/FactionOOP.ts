@@ -1,5 +1,5 @@
-import { User, Guild, ColorResolvable, Role, GuildMemberManager, Collection, GuildMember, ChannelType, PermissionsBitField, CategoryChannel } from "discord.js"
-import { bareFaction, Factions, gameGuilds, leader_deputy_roles } from "./factionUtil";
+import { User, Guild, ColorResolvable, Role, Collection, GuildMember, ChannelType, PermissionsBitField, CategoryChannel, DMChannel } from "discord.js"
+import { bareFaction, Factions, gameGuilds, guild_data } from "./factionUtil";
 
 
 export class Faction {
@@ -152,7 +152,7 @@ export class Faction {
   Disband() {
     console.log(`Disbanding ${this.name}`); //LOG
     // Remove leader and deputy roles from leader/deputy
-    const role_pair: leader_deputy_roles | undefined = gameGuilds.get(this.attachedGuild);
+    const role_pair: guild_data | undefined = gameGuilds.get(this.attachedGuild);
     if (role_pair != undefined) {
       this.attachedGuild.members.removeRole({
         user: this.leader,
@@ -203,16 +203,73 @@ export class Faction {
   }
 
   Leave(user: User, exhile: boolean = false) {
-    if (this.factionRole != undefined && this.members.includes(user)) {
+
+    const leaveReason: string = `${user.username} has left ${this.name}`;
+
+    // Leaving code for all members
+    if (this.factionRole == undefined || !this.members.includes(user)) return;
+    this.attachedGuild.members.removeRole({
+      user: user,
+      role: this.factionRole,
+      reason: leaveReason
+    });
+    const i = this.members.indexOf(user);
+    if (i > -1) this.members.splice(i, 1);
+    if (exhile) this.blacklist.push(user);
+
+    // If the user has special power in the faction...
+    if (this.deputy != null && user.id === this.deputy.id) this.DeputyResign();
+    if (this.leader.id === user.id) this.LeaderResign();
+  }
+
+  DeputyResign() {
+    if (this.deputy == null) return;
+    const deputyRole: Role | undefined = gameGuilds.get(this.attachedGuild)?.deputyRole;
+    if (deputyRole == undefined) { console.log(`The server ${this.attachedGuild.name} is not initialised?!`); return; }
+
+    this.attachedGuild.members.removeRole({
+      user: this.deputy,
+      role: deputyRole,
+      reason: `${this.deputy.username} has left ${this.name}`
+    });
+
+    //Send a warning to the leader
+    let deputyNick: string | undefined | null = this.attachedGuild.members.cache.get(this.deputy!.id)?.nickname;
+    deputyNick = (deputyNick == undefined || deputyNick == null) ? this.deputy!.username : deputyNick
+    this.leader.createDM().then((chn: DMChannel) =>
+      chn.send(`***WARNING*** Your deputy *${deputyNick}* has left **${this.name}**.\n
+Don't forget to appoint a new deputy using \`/appoint-deputy\``));
+
+    this.deputy = null;
+  }
+
+  LeaderResign() {
+    const ldRoles: guild_data | undefined = gameGuilds.get(this.attachedGuild);
+    if (ldRoles == undefined) { console.log(`The server ${this.attachedGuild.name} is not initialised?!`); return; }
+
+    this.attachedGuild.members.removeRole({
+      user: this.leader,
+      role: ldRoles.leaderRole,
+      reason: `${this.leader.username} has left ${this.name}`
+    });
+
+    if (this.deputy != null) {
+      // Promote the deputy to leader
+      const promoMessage: string = `${this.deputy.username} has been promoted to leader`;
       this.attachedGuild.members.removeRole({
-        user: user,
-        role: this.factionRole,
-        reason: `${user.username} has left ${this.name}`
-      })
-      const i = this.members.indexOf(user);
-      if (i > -1) this.members.splice(i, 1);
-      if (exhile) this.blacklist.push(user);
-    }
+        user: this.deputy,
+        role: ldRoles.deputyRole,
+        reason: promoMessage
+      });
+      this.attachedGuild.members.addRole({
+        user: this.deputy,
+        role: ldRoles.leaderRole,
+        reason: promoMessage
+      });
+      this.leader = this.deputy;
+      this.deputy = null;
+    } else // In the power vacuum the faction is fractured. 
+      this.Disband();
   }
 
   AssignDeputy(user: User) {

@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder, SlashCommandUserOption, Role, Guild, GuildMemberRoleManager, GuildMember, APIInteractionGuildMember, User } from "discord.js"
-import { Command } from "../util/Command"
-import { gameGuilds, getUserFaction } from "../util/factionUtil";
-import { Faction } from "../util/FactionOOP";
+import { Command } from "@/src/util/Command"
+import { gameGuilds, getUserFaction } from "@/src/util/factionUtil";
+import { Faction } from "@/src/util/FactionOOP";
 
 export const cmd: Command = {
   name: "appoint-deputy",

@@ -1,16 +1,15 @@
-import { Guild, GuildMember, User, APIUser, ColorResolvable, Collection, UserManager } from "discord.js";
+import { Guild, GuildMember, User, APIUser, ColorResolvable, Collection, UserManager, Emoji } from "discord.js";
 import { Faction } from "./FactionOOP";
 import { Role, APIInteractionGuildMember } from "discord.js"
 import * as fs from "fs";
 
-export type leader_deputy_roles = {
+export type guild_data = {
   leaderRole: Role,
   deputyRole: Role
+  sealEmoji: Emoji
 }
 
-export const sealEmoji: { name: string, id: string } = { name: "approval", id: "1131280996302585947" }; // Wax seal not the animal :(
-
-export let gameGuilds = new Map<Guild, leader_deputy_roles>();
+export let gameGuilds = new Map<Guild, guild_data>();
 export let Factions: Faction[] = [];
 
 // Pulling client caches to the global scope
@@ -32,6 +31,11 @@ export async function setupGuild(g: Guild) {
       color: "Default",
       reason: `The faction deputy role for ${g.name}`
     }),
+    sealEmoji: await g.emojis.create({
+      attachment: "seal.png",
+      name: "approval",
+      reason: `The seal emoji for ${g.name}`
+    })
   });
 }
 
@@ -43,6 +47,16 @@ export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember,
     if (U instanceof User &&
       Fac.members.includes(U) &&
       guild.equals(Fac.attachedGuild))
+      f = Fac;
+  });
+  return f;
+}
+
+export const getFactionByName = (name: string, guild: Guild): Faction | undefined => {
+  let f: Faction | undefined;
+  Factions.map((Fac: Faction) => {
+    if (Fac.attachedGuild.equals(guild) &&
+      Fac.name.toLowerCase() === name.toLowerCase())
       f = Fac;
   });
   return f;
@@ -108,34 +122,39 @@ const fromJSON = async (json: string) => {
   });
 }
 
-type bare_leader_deputy_roles = {
+type bare_guild_data = {
   leaderRolerID: string,
-  deputyRoleID: string
+  deputyRoleID: string,
+  sealEmojiID: string;
 }
-const guildRolesToJSON = (): string => {
+const guildDataToJSON = (): string => {
   let bare_guildRoles: any = {};
   gameGuilds.forEach((key, val) => {
-    const rolepair: bare_leader_deputy_roles = {
+    const sealEmojiID = key.sealEmoji.id == null ? "" : key.sealEmoji.id
+    const data: bare_guild_data = {
       leaderRolerID: key.leaderRole.id,
-      deputyRoleID: key.deputyRole.id
+      deputyRoleID: key.deputyRole.id,
+      sealEmojiID: sealEmojiID
     }
-    bare_guildRoles[val.id] = rolepair;
+    bare_guildRoles[val.id] = data;
   });
   return JSON.stringify(bare_guildRoles);
 }
 const guildRolesFromJSON = (json: string) => {
-  type FileData = { [guildID: string]: bare_leader_deputy_roles };
+  type FileData = { [guildID: string]: bare_guild_data };
   const bare_guildRoles: FileData = JSON.parse(json);
-  gameGuilds = new Map<Guild, leader_deputy_roles>();
+  gameGuilds = new Map<Guild, guild_data>();
   for (let guildID in bare_guildRoles) {
     const guild: Guild | undefined = clientCache.guilds?.get(guildID);
     if (guild != undefined) {
       const leaderRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].leaderRolerID);
       const deputyRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].deputyRoleID);
-      if (leaderRole != undefined && deputyRole != undefined)
+      const sealEmoji: Emoji | undefined = guild.emojis.cache.get(bare_guildRoles[guildID].sealEmojiID);
+      if (leaderRole != undefined && deputyRole != undefined && sealEmoji != undefined)
         gameGuilds.set(guild, {
           leaderRole: leaderRole,
-          deputyRole: deputyRole
+          deputyRole: deputyRole,
+          sealEmoji: sealEmoji
         });
     }
   }
@@ -143,7 +162,7 @@ const guildRolesFromJSON = (json: string) => {
 
 export const saveData = () => {
   // Save guild roles
-  fs.writeFileSync("session/guildroles.json", guildRolesToJSON());
+  fs.writeFileSync("session/guildroles.json", guildDataToJSON());
 
   // Save factions
   let factionJSONs: bareFaction[] = [];

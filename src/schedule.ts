@@ -1,6 +1,6 @@
 import { CronJob } from 'cron';
 import { gameGuilds, guild_data, saveData } from './util/factionUtil';
-import { Guild } from 'discord.js';
+import { Collection, Guild, NonThreadGuildBasedChannel } from 'discord.js';
 
 class Schedules {
   dayJob: CronJob;
@@ -33,7 +33,7 @@ class Schedules {
 
   day() { //Fires at 7am UTC
     // Increment the date and season of each guild
-    gameGuilds.forEach((val: guild_data) => {
+    gameGuilds.forEach(async (val: guild_data, key: Guild) => {
       switch (val.dateData.Season) {
         case 'Highthaw':
           val.dateData.Season = 'Brightcrest';
@@ -48,6 +48,18 @@ class Schedules {
           val.dateData.Season = 'Highthaw';
           val.dateData.Year++;
       }
+      
+      // Send a message
+      key.channels.fetch().then((channels: Collection<string, NonThreadGuildBasedChannel | null>) => {
+        channels.forEach((chn: NonThreadGuildBasedChannel | null) => {
+          if (chn != null && chn.name === 'public-canon' && chn.isTextBased()) 
+            chn.send(`
+∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆
+Today corresponds to **${val.dateData.Season}** of year **${val.dateData.Year}** of the ${val.dateData.Era} era.
+∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆∇∆
+          `);
+        });
+      }); 
     });
   }
   hour() { // Fires at the start of every hour

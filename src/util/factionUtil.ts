@@ -9,7 +9,7 @@ export type guild_data = {
   sealEmoji: Emoji
 }
 
-export let gameGuilds = new Map<Guild, guild_data>();
+export const gameGuilds: Map<Guild, guild_data> = new Map<Guild, guild_data>();
 export let Factions: Faction[] = [];
 
 // Pulling client caches to the global scope
@@ -19,25 +19,6 @@ type client_caches = {
 }
 export let clientCache: client_caches = {};
 
-export async function setupGuild(g: Guild) {
-  gameGuilds.set(g, {
-    leaderRole: await g.roles.create({
-      name: "Leader",
-      color: "Default",
-      reason: `The faction leader role for ${g.name}`
-    }),
-    deputyRole: await g.roles.create({
-      name: "Deputy",
-      color: "Default",
-      reason: `The faction deputy role for ${g.name}`
-    }),
-    sealEmoji: await g.emojis.create({
-      attachment: "seal.png",
-      name: "approval",
-      reason: `The seal emoji for ${g.name}`
-    })
-  });
-}
 
 export const getUserFaction = (usr: GuildMember | APIInteractionGuildMember,
   guild: Guild): Faction | undefined => {
@@ -103,9 +84,15 @@ const fromJSON = async (json: string) => {
     // Populate with existing members
     fac.members.forEach((uuid: string) => {
       const member: GuildMember | undefined = guild.members.cache.get(uuid);
-      if (member != undefined) {
+      if (member != undefined)
         F.Join(member.user);
-      }
+    });
+
+    // Update the blacklist from the file
+    fac.blacklist.forEach((uuid: string) => {
+      const member: GuildMember | undefined = guild.members.cache.get(uuid);
+      if (member != undefined)
+        F.blacklist.push(member.user);
     });
 
     // Set the deputy if there is one
@@ -115,7 +102,6 @@ const fromJSON = async (json: string) => {
       if (deputy != undefined)
         F.deputy = deputy;
     }
-
 
     // Put the finished faction into the list
     Factions.push(F);
@@ -141,22 +127,25 @@ const guildDataToJSON = (): string => {
   return JSON.stringify(bare_guildRoles);
 }
 const guildRolesFromJSON = (json: string) => {
-  type FileData = { [guildID: string]: bare_guild_data };
-  const bare_guildRoles: FileData = JSON.parse(json);
-  gameGuilds = new Map<Guild, guild_data>();
+  // Fetch data from session/guildRoles.json
+  const bare_guildRoles: { [guildID: string]: bare_guild_data } = JSON.parse(json);
+
   for (let guildID in bare_guildRoles) {
     const guild: Guild | undefined = clientCache.guilds?.get(guildID);
-    if (guild != undefined) {
-      const leaderRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].leaderRolerID);
-      const deputyRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].deputyRoleID);
-      const sealEmoji: Emoji | undefined = guild.emojis.cache.get(bare_guildRoles[guildID].sealEmojiID);
-      if (leaderRole != undefined && deputyRole != undefined && sealEmoji != undefined)
-        gameGuilds.set(guild, {
-          leaderRole: leaderRole,
-          deputyRole: deputyRole,
-          sealEmoji: sealEmoji
-        });
-    }
+    if (guild == undefined) return;
+
+    // Guild found successfully so extract data.
+    const leaderRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].leaderRolerID);
+    const deputyRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].deputyRoleID);
+    const sealEmoji: Emoji | undefined = guild.emojis.cache.get(bare_guildRoles[guildID].sealEmojiID);
+    if (leaderRole == undefined || deputyRole == undefined || sealEmoji == undefined) return;
+
+    // Data found successfully so add to gameGuilds.
+    gameGuilds.set(guild, {
+      leaderRole: leaderRole,
+      deputyRole: deputyRole,
+      sealEmoji: sealEmoji
+    });
   }
 }
 
@@ -172,9 +161,9 @@ export const saveData = () => {
 
 export const loadData = async () => {
   // Load guild roles
-  console.log("Loading guildroles from file..."); //LOG
+  console.log("Loading guild data from file..."); //LOG
   guildRolesFromJSON(fs.readFileSync("session/guildroles.json", "utf-8"));
-  console.log("Guildroles loaded!"); //LOG 
+  console.log(`${gameGuilds.size} guilds loaded!`); //LOG 
   // Load factions
   console.log("Loading factions from file..."); //LOG
   await fromJSON(fs.readFileSync("session/factions.json", "utf-8"));

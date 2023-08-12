@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { Command } from "@/src/util/Command";
-import { Faction } from "@/src/util/FactionOOP";
-import { getUserFaction } from "@/src/util/factionUtil";
+import { Command } from "../../util/Command";
+import { Faction } from "../../util/FactionOOP";
+import { getUserFaction } from "../../util/factionUtil";
 
 export const cmd: Command = {
   name: "leave",

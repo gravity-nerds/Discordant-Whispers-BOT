@@ -1,7 +1,7 @@
-import { Command } from "@/src/util/Command";
-import { SlashCommandBuilder, CommandInteraction, GuildMemberRoleManager, Guild, APIInteractionGuildMember, GuildMember, Role, User, Message, MessageReaction, Collection, ReactionCollector, Emoji } from "discord.js";
-import { gameGuilds, getUserFaction } from "@/src/util/factionUtil";
-import { Faction } from "@/src/util/FactionOOP";
+import { Command } from "../../util/Command";
+import { SlashCommandBuilder, CommandInteraction, GuildMemberRoleManager, Guild, APIInteractionGuildMember, GuildMember, Role, User, Message, MessageReaction, Collection, ReactionCollector, Emoji, CollectorFilter } from "discord.js";
+import { gameGuilds, getUserFaction } from "../../util/factionUtil";
+import { Faction } from "../../util/FactionOOP";
 
 // Command to disband a faction:
 export const cmd: Command = {
@@ -51,9 +51,14 @@ const disbandDeputyApproval = async (interaction: CommandInteraction, fac: Facti
     fetchReply: true
   });
 
+  msg.react(sealEmoji.identifier); // Add the seal at the start.
+
+  const msgfilter: CollectorFilter<[MessageReaction, User]> = (r: MessageReaction, u: User) =>
+    r.emoji.id === sealEmoji.id && u.id === fac.deputy!.id;
+
   const hours24: number = 86400000;
   const mins2: number = 120000; //TEMP for testing
-  const collector: ReactionCollector = msg.createReactionCollector({ time: mins2 });
+  const collector: ReactionCollector = msg.createReactionCollector({ time: mins2, filter: msgfilter, maxUsers: 1 });
 
   collector.on('end', async (r: Collection<string, MessageReaction>) => {
     // Check if the sealEmoji has been added

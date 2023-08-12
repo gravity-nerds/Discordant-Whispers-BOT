@@ -1,7 +1,7 @@
-import { Command } from "@/src/util/Command";
+import { Command } from "../../util/Command";
 import { SlashCommandBuilder, SlashCommandStringOption, CommandInteraction, ColorResolvable } from "discord.js";
-import { Factions } from "@/src/util/factionUtil";
-import { Faction } from "@/src/util/FactionOOP";
+import { Factions } from "../../util/factionUtil";
+import { Faction } from "../../util/FactionOOP";
 
 // Command to create a faction:
 export const cmd: Command = {

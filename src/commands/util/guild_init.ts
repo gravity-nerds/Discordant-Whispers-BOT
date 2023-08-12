@@ -1,6 +1,6 @@
-import { Command } from "@/src/util/Command";
+import { Command } from "../../util/Command";
 import { SlashCommandBuilder, CommandInteraction, Guild } from "discord.js";
-import { setupGuild, gameGuilds } from "@/src/util/factionUtil";
+import { gameGuilds } from "../../util/factionUtil";
 
 // Initialise a server:
 export const cmd: Command = {
@@ -19,4 +19,22 @@ export const cmd: Command = {
   }
 }
 
-
+export async function setupGuild(g: Guild) {
+  gameGuilds.set(g, {
+    leaderRole: await g.roles.create({
+      name: "Leader",
+      color: "Default",
+      reason: `The faction leader role for ${g.name}`
+    }),
+    deputyRole: await g.roles.create({
+      name: "Deputy",
+      color: "Default",
+      reason: `The faction deputy role for ${g.name}`
+    }),
+    sealEmoji: await g.emojis.create({
+      attachment: "seal.png",
+      name: "approval",
+      reason: `The seal emoji for ${g.name}`
+    })
+  });
+}

@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder, SlashCommandUserOption, Role, Guild, GuildMemberRoleManager, GuildMember, APIInteractionGuildMember, User } from "discord.js"
-import { Command } from "@/src/util/Command"
-import { gameGuilds, getUserFaction } from "@/src/util/factionUtil";
-import { Faction } from "@/src/util/FactionOOP";
+import { Command } from "../../util/Command"
+import { gameGuilds, getUserFaction } from "../../util/factionUtil";
+import { Faction } from "../../util/FactionOOP";
 
 export const cmd: Command = {
   name: "appoint-deputy",
@@ -29,9 +29,13 @@ export const cmd: Command = {
     const fac: Faction | undefined = getUserFaction(user, guild);
     if (fac == undefined) { interaction.reply("You are not a member of a faction."); return; }
 
+    // Get the user to make deputy and check if it's a valid target.
     const targetUser: User | null = interaction.options.getUser("deputy");
     if (targetUser == null) { interaction.reply("No deputy has been provided."); return; }
     if (!fac.members.includes(targetUser)) { interaction.reply(`${targetUser.username} is not a member of ${fac.name}.`); return; }
+    if (targetUser.id === fac.leader.id) { interaction.reply("*It is impossible to assign yourself as your own deputy*"); return; }
+
+    // Faction found, the user is the faction's leader and the deputy is valid
     fac.AssignDeputy(targetUser);
     interaction.reply(`${targetUser.username} is now the deputy of ${fac.name}.`);
   }

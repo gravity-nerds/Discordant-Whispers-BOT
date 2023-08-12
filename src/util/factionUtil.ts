@@ -5,8 +5,13 @@ import * as fs from "fs";
 
 export type guild_data = {
   leaderRole: Role,
-  deputyRole: Role
-  sealEmoji: Emoji
+  deputyRole: Role,
+  sealEmoji: Emoji,
+  dateData: {
+    Year: number,
+    Season: "Highthaw" | "Brightcrest" | "Hazelhelm" | "Rimemeet",
+    Era: string
+  }
 }
 
 export const gameGuilds: Map<Guild, guild_data> = new Map<Guild, guild_data>();
@@ -111,7 +116,8 @@ const fromJSON = async (json: string) => {
 type bare_guild_data = {
   leaderRolerID: string,
   deputyRoleID: string,
-  sealEmojiID: string;
+  sealEmojiID: string,
+  dateDataJSON: string
 }
 const guildDataToJSON = (): string => {
   let bare_guildRoles: any = {};
@@ -120,7 +126,8 @@ const guildDataToJSON = (): string => {
     const data: bare_guild_data = {
       leaderRolerID: key.leaderRole.id,
       deputyRoleID: key.deputyRole.id,
-      sealEmojiID: sealEmojiID
+      sealEmojiID: sealEmojiID,
+      dateDataJSON: JSON.stringify(key.dateData)
     }
     bare_guildRoles[val.id] = data;
   });
@@ -144,7 +151,8 @@ const guildRolesFromJSON = (json: string) => {
     gameGuilds.set(guild, {
       leaderRole: leaderRole,
       deputyRole: deputyRole,
-      sealEmoji: sealEmoji
+      sealEmoji: sealEmoji,
+      dateData: JSON.parse(bare_guildRoles[guildID].dateDataJSON)
     });
   }
 }

@@ -19,11 +19,6 @@
     ],
     "sourceMap": false,
     "baseUrl": "./",
-    "paths": {
-      "@/*": [
-        "*"
-      ]
-    }
   },
   "files": [
     "src/index.ts"

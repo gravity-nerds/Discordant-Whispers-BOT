@@ -1,7 +1,7 @@
-import { Command } from "@/src/util/Command";
+import { Command } from "../../util/Command";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { Faction } from "@/src/util/FactionOOP";
-import { Factions } from "@/src/util/factionUtil";
+import { Faction } from "../../util/FactionOOP";
+import { Factions, gameGuilds } from "../../util/factionUtil";
 
 export const cmd: Command = {
   name: "list-factions",
@@ -9,6 +9,16 @@ export const cmd: Command = {
   command: () => new SlashCommandBuilder()
     .setName(cmd.name).setDescription(cmd.description),
   execute: async (interaction: CommandInteraction) => {
+    if (interaction.guild == null) return;
+
+    console.log(`Listing factions in ${interaction.guild.name}, one of ${gameGuilds.size} over all discord.`); //LOG
+    if (!gameGuilds.has(interaction.guild)) {
+      interaction.reply(`*The server ${interaction.guild} has not been initialised.*\n
+Please use \`/init\` to initialise the server.`); //LOG
+      return;
+    }
+
+
     let factionLS: string = "**All factions:**\n";
     let factionCount: number = 0;
     Factions.forEach((fac: Faction) => {

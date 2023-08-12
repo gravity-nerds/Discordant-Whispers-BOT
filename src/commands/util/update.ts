@@ -1,4 +1,4 @@
-import { Command } from "@/src/util/Command"
+import { Command } from "../../util/Command"
 import { CommandInteraction, SlashCommandBuilder } from "discord.js"
 
 export const cmd: Command = {

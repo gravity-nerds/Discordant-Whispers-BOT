@@ -1,20 +1,21 @@
 
 import { autocompletes } from "./autocomplete"
-import { Client, IntentsBitField, REST, Routes } from "discord.js"
+import { Client, IntentsBitField, REST, Routes, Guild } from "discord.js"
 import { Command } from "./util/Command"
 import * as dotenv from "dotenv"
 import * as fs from "fs"
-import { clientCache, loadData } from "./util/factionUtil"
-import {Schedules} from "./schedule";
+import { clientCache, loadData, gameGuilds } from "./util/factionUtil"
+import { Schedules } from "./schedule";
+import * as Path from "path";
 dotenv.config()
 
 const config: any = require("../config.json")
 const TOKEN: any = process.env.TOKEN
 
-if (!fs.existsSync('session')){fs.mkdirSync("session")}
-if (!fs.existsSync('session/guildroles.json')){fs.writeFileSync('session/guildroles.json', '{}')}
-if (!fs.existsSync('session/factions.json')){fs.writeFileSync('session/factions.json', '[]')}
-let schedules:Schedules = new Schedules();
+if (!fs.existsSync('session')) { fs.mkdirSync("session") }
+if (!fs.existsSync('session/guildroles.json')) { fs.writeFileSync('session/guildroles.json', '{}') }
+if (!fs.existsSync('session/factions.json')) { fs.writeFileSync('session/factions.json', '[]') }
+let schedules: Schedules = new Schedules();
 
 const Rest = new REST({ version: '9' }).setToken(TOKEN);
 
@@ -30,19 +31,30 @@ const client: Client = new Client({
 
 //CLEAR ALL SLASH COMMANDS ON START
 Rest.put(Routes.applicationGuildCommands(config["client-id"], config["dev-server"]), { body: [] })
-  .then(() => console.log("Commands RESET!")).catch(console.error);
+  .then(() => console.log("Guild Commands RESET!")).catch(console.error);
+Rest.put(Routes.applicationCommands(config["client-id"]), { body: [] })
+  .then(() => console.log("Client Commands RESET!")).catch(console.error);
 
 let cmds: { [key: string]: Command } = {}
+
+let filenames: string[] = [];
+const recursiveCMDsearch = (dir: string) => {
+  fs.readdirSync(dir).forEach((name: string) => {
+    const absolute: string = Path.join(dir, name);
+    if (fs.statSync(absolute).isDirectory()) return recursiveCMDsearch(absolute);
+    else return filenames.push(absolute);
+  });
+}
 
 async function uploadCommands() {
   let rest: Array<any> = []
 
-  const filenames: Array<string> = await fs.readdirSync(`${__dirname}/commands`)
+  recursiveCMDsearch(`${__dirname}/commands`);
   filenames.forEach(filename => {
-    const cmd: Command = require(`./commands/${filename}`).cmd
+    const cmd: Command = require(filename).cmd
     rest.push(cmd.command())
     cmds[cmd.name] = cmd
-  })
+  });
 
   try {
     if (config.mode == "DEV") {

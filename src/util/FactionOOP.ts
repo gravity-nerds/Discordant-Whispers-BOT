@@ -185,11 +185,18 @@ export class Faction {
     if (i > -1) Factions.splice(i, 1);
   }
 
-  async Join(newUser: User) {
-    const notBlacklisted: boolean = !this.blacklist.includes(newUser);
+  async Join(newUser: User): Promise<"SUCCESS" | "FAILURE"> {
+    // Check if the user is blacklisted
+    if (this.blacklist.includes(newUser)) {
+      newUser.createDM().then(
+        (chn: DMChannel) => chn.send(`You are currently blacklisted from ${this.name}.`)
+      );
+      return "FAILURE";
+    }
+
     const factionRoleDefined: boolean = this.factionRole != undefined;
     const notInFaction: boolean = !this.members.includes(newUser);
-    if (notBlacklisted && factionRoleDefined && notInFaction && this.factionRole != undefined) {
+    if (factionRoleDefined && notInFaction && this.factionRole != undefined) {
       this.members.push(newUser);
       const members: Collection<string, GuildMember> = await this.attachedGuild.members.fetch();
       const hasRole: boolean | undefined = members.get(newUser.id)?.roles.cache.has(this.factionRole.id);
@@ -199,7 +206,8 @@ export class Faction {
           role: this.factionRole,
           reason: `${newUser.username} has joined ${this.name}`
         });
-    }
+      return "SUCCESS";
+    } else return "FAILURE";
   }
 
   Leave(user: User, exhile: boolean = false) {

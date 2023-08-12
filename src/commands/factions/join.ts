@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
-import { Command } from "@/src/util/Command";
-import { getFactionByName, getUserFaction } from "@/src/util/factionUtil";
-import { Faction } from "@/src/util/FactionOOP";
+import { Command } from "../../util/Command";
+import { getFactionByName, getUserFaction } from "../../util/factionUtil";
+import { Faction } from "../../util/FactionOOP";
 
 export const cmd: Command = {
   name: "join",
@@ -33,7 +33,9 @@ Consider using \`/list-factions\` to find the correct name.`);
     }
 
     // And add them to the faction!
-    newFaction.Join(interaction.user);
-    interaction.reply(`**Welcome to ${newFaction.name}!**`);
+    const result: "SUCCESS" | "FAILURE" = await newFaction.Join(interaction.user);
+    if (result === "SUCCESS") interaction.reply(`**Welcome to ${newFaction.name}!**`);
+    else interaction.reply(`**Failed to join ${newFaction.name}...**\n
+Either you are blacklisted from the faction or are already a member.`);
   }
 }

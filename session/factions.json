@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "attachedGuild": "813720741333696532",
+    "name": "TestFacFortniteBalls",
+    "color": "#ABCDEF",
+    "members": [
+      "612325551079686273"
+    ],
+    "leader": "612325551079686273",
+    "deputy": "",
+    "role": "1139591685433733162",
+    "leaderActivity": 0,
+    "blacklist": []
+  }
+]

@@ -33,6 +33,7 @@ class Schedules {
 
   day() { //Fires at 7am UTC
     // Increment the date and season of each guild
+    console.log("Running DAILY code:");
     gameGuilds.forEach(async (val: guild_data, key: Guild) => {
       switch (val.dateData.Season) {
         case 'Highthaw':

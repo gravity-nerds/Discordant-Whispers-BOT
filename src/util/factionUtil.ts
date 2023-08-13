@@ -3,15 +3,16 @@ import { Faction } from "./FactionOOP";
 import { Role, APIInteractionGuildMember } from "discord.js"
 import * as fs from "fs";
 
+type dateDataStruct = {
+  Year: number,
+  Season: "Highthaw" | "Brightcrest" | "Hazelhelm" | "Rimemeet",
+  Era: string
+}
 export type guild_data = {
   leaderRole: Role,
   deputyRole: Role,
   sealEmoji: Emoji,
-  dateData: {
-    Year: number,
-    Season: "Highthaw" | "Brightcrest" | "Hazelhelm" | "Rimemeet",
-    Era: string
-  }
+  dateData: dateDataStruct
 }
 
 export const gameGuilds: Map<Guild, guild_data> = new Map<Guild, guild_data>();
@@ -117,7 +118,7 @@ type bare_guild_data = {
   leaderRolerID: string,
   deputyRoleID: string,
   sealEmojiID: string,
-  dateDataJSON: string
+  dateData: dateDataStruct
 }
 const guildDataToJSON = (): string => {
   let bare_guildRoles: any = {};
@@ -127,7 +128,7 @@ const guildDataToJSON = (): string => {
       leaderRolerID: key.leaderRole.id,
       deputyRoleID: key.deputyRole.id,
       sealEmojiID: sealEmojiID,
-      dateDataJSON: JSON.stringify(key.dateData)
+      dateData: key.dateData
     }
     bare_guildRoles[val.id] = data;
   });
@@ -152,7 +153,7 @@ const guildRolesFromJSON = (json: string) => {
       leaderRole: leaderRole,
       deputyRole: deputyRole,
       sealEmoji: sealEmoji,
-      dateData: JSON.parse(bare_guildRoles[guildID].dateDataJSON)
+      dateData: bare_guildRoles[guildID].dateData
     });
   }
 }

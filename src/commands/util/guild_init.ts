@@ -35,6 +35,11 @@ export async function setupGuild(g: Guild) {
       attachment: "seal.png",
       name: "approval",
       reason: `The seal emoji for ${g.name}`
-    })
+    }),
+    dateData: {
+      Year: 276,
+      Season: "Highthaw",
+      Era: "Kinter"
+    }
   });
 }

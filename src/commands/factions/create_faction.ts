@@ -1,6 +1,6 @@
 import { Command } from "../../util/Command";
 import { SlashCommandBuilder, SlashCommandStringOption, CommandInteraction, ColorResolvable } from "discord.js";
-import { Factions } from "../../util/factionUtil";
+import { Factions, getUserFaction } from "../../util/factionUtil";
 import { Faction } from "../../util/FactionOOP";
 
 // Command to create a faction:
@@ -15,6 +15,12 @@ export const cmd: Command = {
     .addStringOption((option: SlashCommandStringOption) =>
       option.setName("faction-colour").setDescription("The colour the faction will use (good hex please)").setRequired(true)),
   execute: async (interaction: CommandInteraction) => {
+    if (interaction.member == null || interaction.guild == null) return;
+
+    // Get the existing faction of the user if there is one and leave it if so
+    const currentFaction: Faction | undefined = getUserFaction(interaction.member, interaction.guild);
+    if (currentFaction != undefined) currentFaction.Leave(interaction.user);
+
     // Faction name and colour are required so these hopefully should never be undefined
     const faction_name: string | undefined = interaction.options.get("faction-name")?.value?.toString();
     let nameUsed: boolean = false;

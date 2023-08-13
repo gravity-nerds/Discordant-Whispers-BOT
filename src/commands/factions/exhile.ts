@@ -41,7 +41,7 @@ export const cmd: Command = {
     const mins2: number = 120000; //TEMP for testing
 
     // Collect reactions and process them after collection is complete
-    msg.createReactionCollector({ time: mins2, filter: reactFilter })
+    msg.createReactionCollector({ time: hours24, filter: reactFilter })
       .on('end', async (r: Collection<string, MessageReaction>) => {
         // if reactFilter isn't buggy then only good reactions come through
         if (r.size == 0) interaction.editReply("**No votes**\n*(The vote of the person who called the vote does not count.)*");

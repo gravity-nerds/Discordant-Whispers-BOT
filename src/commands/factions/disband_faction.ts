@@ -58,7 +58,7 @@ const disbandDeputyApproval = async (interaction: CommandInteraction, fac: Facti
 
   const hours24: number = 86400000;
   const mins2: number = 120000; //TEMP for testing
-  const collector: ReactionCollector = msg.createReactionCollector({ time: mins2, filter: msgfilter, maxUsers: 1 });
+  const collector: ReactionCollector = msg.createReactionCollector({ time: hours24, filter: msgfilter, maxUsers: 1 });
 
   collector.on('end', async (r: Collection<string, MessageReaction>) => {
     // Check if the sealEmoji has been added

@@ -1,5 +1,5 @@
 import { User, Guild, ColorResolvable, Role, Collection, GuildMember, ChannelType, PermissionsBitField, CategoryChannel, DMChannel } from "discord.js"
-import { bareFaction, Factions, gameGuilds, guild_data } from "./factionUtil";
+import { bareFaction, Factions, gameGuilds, getUserFaction, guild_data } from "./factionUtil";
 
 
 export class Faction {
@@ -39,7 +39,6 @@ export class Faction {
     const creatorMember: GuildMember | undefined = guildMembers.get(creator.id);
     if (leaderRole != undefined && creatorMember != undefined &&
       !creatorMember.roles.cache.has(leaderRole.id)) {
-      console.log(`About to add ${leaderRole.name} to ${creator.username}`); //LOG
       this.attachedGuild.members.addRole({
         user: creator,
         role: leaderRole,
@@ -88,6 +87,22 @@ export class Faction {
     });
 
     // Create all the other channels
+    this.attachedGuild.channels.create({
+      name: "constructions",
+      reason: "Every faction has a place to declare their constructions",
+      type: ChannelType.GuildForum,
+      parent: this.category, 
+      topic: "A place to declare projects, contribute resources and flesh out details",
+      availableTags: [
+        {name: "Offense"},
+        {name: "Defence"},
+        {name: "Reasearch"},
+        {name: "Infrastructure"},
+        {name: "Scouting/Spying"},
+        {name: "Propaganda"}
+      ]
+    });
+
     this.attachedGuild.channels.create({
       name: `${this.name}-ooc`,
       reason: "Every faction has an out of character channel",
@@ -290,7 +305,6 @@ Don't forget to appoint a new deputy using \`/appoint-deputy\``));
         reason: `${this.deputy.username} is no longer the deputy of ${this.leader.username}`
       });
     this.deputy = user;
-    console.log(`About to add ${deputyRole.name} to ${user.username}`); //LOG
     this.attachedGuild.members.addRole({
       user: user,
       role: deputyRole,

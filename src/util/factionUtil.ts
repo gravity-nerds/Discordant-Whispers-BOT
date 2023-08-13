@@ -137,16 +137,17 @@ const guildDataToJSON = (): string => {
 const guildRolesFromJSON = (json: string) => {
   // Fetch data from session/guildRoles.json
   const bare_guildRoles: { [guildID: string]: bare_guild_data } = JSON.parse(json);
-
   for (let guildID in bare_guildRoles) {
     const guild: Guild | undefined = clientCache.guilds?.get(guildID);
-    if (guild == undefined) return;
-
+    if (guild == undefined) { console.warn(`No guild with id: ${guildID} was found!`); return };
     // Guild found successfully so extract data.
     const leaderRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].leaderRolerID);
     const deputyRole: Role | undefined = guild.roles.cache.get(bare_guildRoles[guildID].deputyRoleID);
     const sealEmoji: Emoji | undefined = guild.emojis.cache.get(bare_guildRoles[guildID].sealEmojiID);
-    if (leaderRole == undefined || deputyRole == undefined || sealEmoji == undefined) return;
+    if (leaderRole == undefined || deputyRole == undefined || sealEmoji == undefined) {
+      console.warn(`${guild.name}'s data isn't found: leader: ${leaderRole?.name}, deputy: ${deputyRole?.name}, seal emoji: ${sealEmoji?.name}`);
+      return;
+    }
 
     // Data found successfully so add to gameGuilds.
     gameGuilds.set(guild, {

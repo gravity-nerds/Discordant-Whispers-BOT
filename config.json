@@ -1,5 +1,5 @@
 {
-  "mode": "PRODUCTION",
-  "dev-server": "813720741333696532",
+  "mode": "DEV",
+  "dev-server": "1131279656667054100",
   "client-id": "1128698055055646790"
 }
